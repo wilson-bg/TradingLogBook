@@ -62,6 +62,9 @@ export class MemStorage implements IStorage {
       id,
       pnl,
       status: insertTrade.exitPrice ? 'closed' : 'open',
+      exitPrice: insertTrade.exitPrice || null,
+      exitTime: insertTrade.exitTime || null,
+      notes: insertTrade.notes || null,
     };
     
     this.trades.set(id, trade);
@@ -113,6 +116,12 @@ export class MemStorage implements IStorage {
       ...insertPlan,
       id,
       createdAt: new Date(),
+      description: insertPlan.description || null,
+      objectives: insertPlan.objectives || null,
+      strategy: insertPlan.strategy || null,
+      riskPercentage: insertPlan.riskPercentage || null,
+      targetReturn: insertPlan.targetReturn || null,
+      isActive: insertPlan.isActive ?? true,
     };
     
     this.tradingPlans.set(id, plan);

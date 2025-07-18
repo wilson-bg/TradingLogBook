@@ -39,15 +39,15 @@ export default function Sidebar() {
           const isActive = location === item.href;
           return (
             <Link key={item.name} href={item.href}>
-              <a className={cn(
-                "flex items-center px-6 py-3 text-sm font-medium transition-colors",
+              <div className={cn(
+                "flex items-center px-6 py-3 text-sm font-medium transition-colors cursor-pointer",
                 isActive 
                   ? "text-primary bg-blue-50 border-r-2 border-primary" 
                   : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
               )}>
                 <Icon className="mr-3 h-5 w-5" />
                 {item.name}
-              </a>
+              </div>
             </Link>
           );
         })}
@@ -60,15 +60,15 @@ export default function Sidebar() {
           const isActive = location === item.href;
           return (
             <Link key={item.name} href={item.href}>
-              <a className={cn(
-                "flex items-center px-6 py-3 text-sm font-medium transition-colors",
+              <div className={cn(
+                "flex items-center px-6 py-3 text-sm font-medium transition-colors cursor-pointer",
                 isActive 
                   ? "text-primary bg-blue-50 border-r-2 border-primary" 
                   : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
               )}>
                 <Icon className="mr-3 h-5 w-5" />
                 {item.name}
-              </a>
+              </div>
             </Link>
           );
         })}

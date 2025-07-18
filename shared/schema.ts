@@ -31,7 +31,6 @@ export const tradingPlans = pgTable("trading_plans", {
 export const insertTradeSchema = createInsertSchema(trades).omit({
   id: true,
   pnl: true,
-  createdAt: true,
 });
 
 export const insertTradingPlanSchema = createInsertSchema(tradingPlans).omit({
