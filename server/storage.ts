@@ -1,4 +1,4 @@
-import { trades, tradingPlans, type Trade, type InsertTrade, type TradingPlan, type InsertTradingPlan } from "@shared/schema";
+import { trades, tradingPlans, users, type Trade, type InsertTrade, type TradingPlan, type InsertTradingPlan, type User, type UpsertUser } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 
@@ -16,17 +16,23 @@ export interface IStorage {
   createTradingPlan(plan: InsertTradingPlan): Promise<TradingPlan>;
   updateTradingPlan(id: number, plan: Partial<TradingPlan>): Promise<TradingPlan | undefined>;
   deleteTradingPlan(id: number): Promise<boolean>;
+
+  // User operations (mandatory for Replit Auth)
+  getUser(id: string): Promise<User | undefined>;
+  upsertUser(user: UpsertUser): Promise<User>;
 }
 
 export class MemStorage implements IStorage {
   private trades: Map<number, Trade>;
   private tradingPlans: Map<number, TradingPlan>;
+  private users: Map<string, User>;
   private currentTradeId: number;
   private currentPlanId: number;
 
   constructor() {
     this.trades = new Map();
     this.tradingPlans = new Map();
+    this.users = new Map();
     this.currentTradeId = 1;
     this.currentPlanId = 1;
   }
@@ -141,6 +147,25 @@ export class MemStorage implements IStorage {
 
   async deleteTradingPlan(id: number): Promise<boolean> {
     return this.tradingPlans.delete(id);
+  }
+
+  // User operations (mandatory for Replit Auth)
+  async getUser(id: string): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const user: User = {
+      id: userData.id,
+      email: userData.email || null,
+      firstName: userData.firstName || null,
+      lastName: userData.lastName || null,
+      profileImageUrl: userData.profileImageUrl || null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.users.set(userData.id, user);
+    return user;
   }
 }
 
@@ -257,6 +282,27 @@ export class DatabaseStorage implements IStorage {
   async deleteTradingPlan(id: number): Promise<boolean> {
     const result = await db.delete(tradingPlans).where(eq(tradingPlans.id, id));
     return (result.rowCount || 0) > 0;
+  }
+
+  // User operations (mandatory for Replit Auth)
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return user;
   }
 }
 
