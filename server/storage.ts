@@ -1,4 +1,6 @@
 import { trades, tradingPlans, type Trade, type InsertTrade, type TradingPlan, type InsertTradingPlan } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // Trade operations
@@ -142,4 +144,120 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Database Storage implementation
+export class DatabaseStorage implements IStorage {
+  // Trade operations
+  async getTrades(): Promise<Trade[]> {
+    const result = await db.select().from(trades).orderBy(trades.entryTime);
+    return result.reverse(); // Most recent first
+  }
+
+  async getTrade(id: number): Promise<Trade | undefined> {
+    const [trade] = await db.select().from(trades).where(eq(trades.id, id));
+    return trade || undefined;
+  }
+
+  async createTrade(insertTrade: InsertTrade): Promise<Trade> {
+    // Calculate P&L if both entry and exit prices are provided
+    let pnl = null;
+    if (insertTrade.exitPrice && insertTrade.entryPrice) {
+      const entryPrice = parseFloat(insertTrade.entryPrice);
+      const exitPrice = parseFloat(insertTrade.exitPrice);
+      const size = parseFloat(insertTrade.size);
+      
+      if (insertTrade.type === 'buy') {
+        pnl = ((exitPrice - entryPrice) * size).toFixed(2);
+      } else {
+        pnl = ((entryPrice - exitPrice) * size).toFixed(2);
+      }
+    }
+
+    const tradeData = {
+      ...insertTrade,
+      pnl,
+      status: insertTrade.exitPrice ? 'closed' : 'open',
+      exitPrice: insertTrade.exitPrice || null,
+      exitTime: insertTrade.exitTime || null,
+      notes: insertTrade.notes || null,
+    };
+
+    const [trade] = await db
+      .insert(trades)
+      .values(tradeData)
+      .returning();
+    return trade;
+  }
+
+  async updateTrade(id: number, updates: Partial<Trade>): Promise<Trade | undefined> {
+    // Recalculate P&L if prices are being updated
+    if (updates.exitPrice && updates.entryPrice) {
+      const entryPrice = parseFloat(updates.entryPrice);
+      const exitPrice = parseFloat(updates.exitPrice);
+      const size = parseFloat(updates.size || '0');
+      
+      if (updates.type === 'buy') {
+        updates.pnl = ((exitPrice - entryPrice) * size).toFixed(2);
+      } else {
+        updates.pnl = ((entryPrice - exitPrice) * size).toFixed(2);
+      }
+      updates.status = 'closed';
+    }
+
+    const [trade] = await db
+      .update(trades)
+      .set(updates)
+      .where(eq(trades.id, id))
+      .returning();
+    return trade || undefined;
+  }
+
+  async deleteTrade(id: number): Promise<boolean> {
+    const result = await db.delete(trades).where(eq(trades.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  // Trading plan operations
+  async getTradingPlans(): Promise<TradingPlan[]> {
+    const result = await db.select().from(tradingPlans).orderBy(tradingPlans.createdAt);
+    return result.reverse(); // Most recent first
+  }
+
+  async getTradingPlan(id: number): Promise<TradingPlan | undefined> {
+    const [plan] = await db.select().from(tradingPlans).where(eq(tradingPlans.id, id));
+    return plan || undefined;
+  }
+
+  async createTradingPlan(insertPlan: InsertTradingPlan): Promise<TradingPlan> {
+    const planData = {
+      ...insertPlan,
+      description: insertPlan.description || null,
+      objectives: insertPlan.objectives || null,
+      strategy: insertPlan.strategy || null,
+      riskPercentage: insertPlan.riskPercentage || null,
+      targetReturn: insertPlan.targetReturn || null,
+      isActive: insertPlan.isActive ?? true,
+    };
+
+    const [plan] = await db
+      .insert(tradingPlans)
+      .values(planData)
+      .returning();
+    return plan;
+  }
+
+  async updateTradingPlan(id: number, updates: Partial<TradingPlan>): Promise<TradingPlan | undefined> {
+    const [plan] = await db
+      .update(tradingPlans)
+      .set(updates)
+      .where(eq(tradingPlans.id, id))
+      .returning();
+    return plan || undefined;
+  }
+
+  async deleteTradingPlan(id: number): Promise<boolean> {
+    const result = await db.delete(tradingPlans).where(eq(tradingPlans.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+}
+
+export const storage = new DatabaseStorage();

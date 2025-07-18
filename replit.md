@@ -29,6 +29,7 @@ Preferred communication style: Simple, everyday language.
 - **ORM**: Drizzle ORM for type-safe database operations
 - **Connection**: Neon Database serverless connection
 - **Schema Management**: Drizzle Kit for migrations and schema management
+- **Storage**: DatabaseStorage class replacing in-memory storage for persistent data
 
 ### Key Components
 
@@ -96,3 +97,17 @@ Preferred communication style: Simple, everyday language.
 7. **Development Experience**: Vite provides fast development with HMR and TypeScript support
 
 The application uses a modern, type-safe stack optimized for developer experience while maintaining production-ready architecture with proper error handling, validation, and state management.
+
+## Recent Changes
+
+### Database Integration (July 2025)
+- ✓ Added PostgreSQL database integration
+- ✓ Created DatabaseStorage class to replace in-memory storage
+- ✓ Implemented Drizzle ORM with Neon serverless connection
+- ✓ Added comprehensive CRUD operations for trades and trading plans
+- ✓ Fixed TypeScript errors and improved type safety
+- ✓ Added editing and detail view functionality for trading plans
+- ✓ Fixed sidebar navigation issues with nested anchor elements
+- ✓ Implemented delete functionality with confirmation dialogs
+
+The application now uses persistent PostgreSQL storage, ensuring data persistence between sessions while maintaining all existing functionality.
