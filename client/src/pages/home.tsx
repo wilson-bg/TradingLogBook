@@ -28,7 +28,7 @@ export default function Home() {
               Bienvenido, {user?.firstName || user?.email || "Trader"}
             </h1>
             <p className="text-slate-600 dark:text-slate-300 mt-1">
-              Gestiona tu trading de manera profesional
+              Gestiona tu trading de manera profesional muy PRO
             </p>
           </div>
           <Button
